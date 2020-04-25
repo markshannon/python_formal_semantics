@@ -136,9 +136,9 @@ The `GEN_RETURN` instruction does the following:
 6. Set the `instruction pointer` to the instruction the `exit` attribute of the newly pushed frame.
 7. `Continue`
 
-#### EXHUASTED
+#### EXHAUSTED
 
-The `EXHUASTED` instruction is equivalent to 
+The `EXHAUSTED` instruction is equivalent to 
 ```
     LOAD_CONSTANT None
     GEN_RETURN
