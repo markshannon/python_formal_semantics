@@ -1,0 +1,130 @@
+digraph G {
+    rankdir = LR
+    splines = "true"
+
+	subgraph cluster_0 {
+		node [shape=rectangle];
+		label = "Interpreter 0";
+
+        istate0 [
+            shape = "record"
+            label = "<f0> Interpreter State | Lock | <f1> Allocator"
+        ];
+        subgraph cluster_heap0 {
+
+            "frame_c" -> "frame_b" -> "frame_a"
+            "frame_m" -> "frame_n"
+
+            label = "Heap"
+            style=filled;
+            color=lightgrey;
+            shared0 [ label = "Shared memory referrence" ]
+            channels0 [label="Channel interface"]
+            int0 [label="int"]
+            type0 [label="type"]
+            object0 [label="object"]
+            int0 -> type0 [ style="dashed"]
+            frame0 [label="frame object"]
+            frame0 -> type0 [ style="dashed"]
+            object0 -> type0 [ style="dashed"]
+            frame_a -> frame0 [style="dashed"]
+            frame_b -> frame0 [style="dashed"]
+            frame_c -> frame0 [style="dashed"]
+            frame_m -> frame0 [style="dashed"]
+            frame_n -> frame0 [style="dashed"]
+        }
+
+
+        "thread0" [
+            shape = "record"
+            rankdir = TB
+            label = "<f0> Thread 0 | <f1> frame | C stack | ... | ..."
+        ];
+
+        "thread1" [
+            shape = "record"
+            rankdir = TB
+            label = "<f0> Thread 1 | <f1> frame | C stack | ... | ..."
+        ];
+ 
+
+        
+        thread0:f0:e -> istate0
+        thread0:f1 -> frame_c
+        
+        thread1:f0 -> istate0
+        thread1:f1 -> frame_m
+
+    }
+
+	subgraph cluster_1 {
+		node [shape=rectangle];
+
+		label = "Interpreter 1";
+
+        istate1 [
+            shape = "record"
+            label = "<f0> Interpreter State | Lock | <f1> Allocator"
+        ];
+    
+        subgraph cluster_heap1 {
+
+            label = "Heap"
+            
+            "frame_p" -> "frame_q"
+            "frame_x" -> "frame_y" -> "frame_z"
+
+            style=filled;
+            color=lightgrey;
+            channels1 [label="Channel interface", rank = 0]
+
+            int1 [label="int"]
+            type1 [label="type"]
+            object1 [label="object"]
+            int1 -> type1 [ style="dashed"]
+            frame1 [label="frame object"]
+            frame1 -> type1 [ style="dashed"]
+            object1 -> type1 [ style="dashed"]
+            frame_p -> frame1 [style="dashed"]
+            frame_q -> frame1 [style="dashed"]
+            frame_x -> frame1 [style="dashed"]
+            frame_y -> frame1 [style="dashed"]
+            frame_z -> frame1 [style="dashed"]
+            shared1 [ label = "Shared memory referrence" ]
+        }
+
+       "thread2" [
+            shape = "record"
+            rankdir = TB
+            label = "<f0> Thread 2 | <f1> frame | C stack | ... | ..."
+        ];
+
+        "thread3" [
+            shape = "record"
+            rankdir = TB
+            label = "<f0> Thread 3 | <f1> frame | C stack | ... | ..."
+        ];
+
+
+        thread3:f0 -> istate1:f0
+        thread3:f1 -> frame_x
+        thread2:f0 -> istate1:f0
+        thread2:f1 -> frame_p
+
+    }
+
+    subgraph {
+        rankdir = LR
+        "shared" [ label = "Shared memory", shape=rectangle ]
+        "channel" [ label = "Channel", shape=rectangle  ]
+        shared -> channel [style="invis"]
+    }
+
+    channels0 -> channel
+    channels1 -> channel
+    channel -> channels0
+    channel -> channels1
+    shared0 -> shared
+    shared1 -> shared
+
+}

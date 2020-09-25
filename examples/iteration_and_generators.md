@@ -4,7 +4,7 @@
 
 This is *not* the final formal semantics of iteration and generators, but it is close enough to be illustrative.
 
-See `core.md` for details of the VM state, abbreviations and low-level instructions.
+See `Core.md` for details of the VM state, abbreviations and low-level instructions.
 
 ## Iteration
 

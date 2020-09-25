@@ -34,8 +34,12 @@ Each frame has the following attributes:
 
 ## Code object
 
-Each code has the  following attributes
+Each code has the following attributes:
 
 * List of arguments
 * List of instructions.
-* Exception jump table. Where excution should jump to if an exception is raised.
+* Exception jump table: where excution should jump to if an exception is raised.
+* Line number table: describes mapping from instruction index to source code line number
+* Source filename
+* Start line
+* Names of all local variables: For debugging purposes.
