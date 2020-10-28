@@ -21,6 +21,7 @@ Calls to Python functions are performed in a two step process. Frame creation an
 
 This operation has no operands.
 The function, a tuple of positional arguments, and a dictionary of keyword arguments are popped from the stack.
+The dictionary is top of the stack, next the positional arguments, then the function.
 The frame is initialized as follows:
 
 * If the length of the tuple is greater than the number of arguments, excluding keyword-only arguments, then fail.
@@ -91,21 +92,6 @@ Pops the value from the stack. Note: this should be the only value on the stack.
 Pops the frame from the thread's frame stack.
 Pushes the value to the stack.
 
-## Loading attributes
-
-`a.b` is compiled to:
-
-```python
-load_attr(name):
-    #compile 'a'
-    obj = POP()
-    getattrfunc = load_special!(obj, "__getattribute__")
-    PUSH(getattrfunc)
-    PUSH((obj,))
-    PUSH({})
-    call!()
-```
-
 ## Load_special
 
 Loading a special attribute from an object's class is a common operation.
@@ -138,20 +124,20 @@ binary_op(lname, rname):
     left = POP()
     if subtype!(type!(right), type!(left)):
         PUSH(right)
-        func = load_special(rname)
+        func = load_special!(rname)
         PUSH(left)
         PUSH(right)
         call!()
     else:
         PUSH(left)
-        func = load_special(lname)
+        func = load_special!(lname)
         PUSH(left)
         PUSH(right)
         call!()
         result = POP()
         if result is NotImplemented:
             PUSH(right)
-            func = load_special(rname)
+            func = load_special!(rname)
             PUSH(left)
             PUSH(right)
             call!()

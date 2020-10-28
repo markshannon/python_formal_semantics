@@ -80,10 +80,10 @@ the following steps must occur.
 * Create a thread within that interpreter
 * Start the execution loop
 
-### Running a code object object in a thread.
+### Running a code object in a thread
 
-To run a code object in a thread, the execution state must be set up, then execution procedes as normal.
-The execution state is set up as follows:
+To run a code object in a thread, the thread's frame stack must be set up, then execution procedes as normal.
+The frame stack is set up as follows:
 
 * An entry frame is pushed to the thread's frame stack.
 * A frame for the code object is created, and pushed to the thread's frame stack.
