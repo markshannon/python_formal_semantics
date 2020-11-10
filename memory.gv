@@ -5,6 +5,8 @@ digraph G {
 	subgraph cluster_0 {
 		node [shape=rectangle];
 		label = "Interpreter 0";
+        style=filled;
+        color=lightgrey;
 
         istate0 [
             shape = "record"
@@ -17,14 +19,14 @@ digraph G {
 
             label = "Heap"
             style=filled;
-            color=lightgrey;
+            color="#bbeebb";
             shared0 [ label = "Shared memory referrence" ]
             channels0 [label="Channel interface"]
             int0 [label="int"]
             type0 [label="type"]
             object0 [label="object"]
             int0 -> type0 [ style="dashed"]
-            frame0 [label="frame object"]
+            frame0 [label="frame class"]
             frame0 -> type0 [ style="dashed"]
             object0 -> type0 [ style="dashed"]
             frame_a -> frame0 [style="dashed"]
@@ -61,6 +63,8 @@ digraph G {
 		node [shape=rectangle];
 
 		label = "Interpreter 1";
+        style=filled;
+        color=lightgrey;
 
         istate1 [
             shape = "record"
@@ -75,14 +79,14 @@ digraph G {
             "frame_x" -> "frame_y" -> "frame_z"
 
             style=filled;
-            color=lightgrey;
+            color="#bbeebb";
             channels1 [label="Channel interface", rank = 0]
 
             int1 [label="int"]
             type1 [label="type"]
             object1 [label="object"]
             int1 -> type1 [ style="dashed"]
-            frame1 [label="frame object"]
+            frame1 [label="frame class"]
             frame1 -> type1 [ style="dashed"]
             object1 -> type1 [ style="dashed"]
             frame_p -> frame1 [style="dashed"]
@@ -113,9 +117,12 @@ digraph G {
 
     }
 
-    subgraph {
+    subgraph cluster_shared {
         rankdir = LR
-        "shared" [ label = "Shared memory", shape=rectangle ]
+        label = "Shared Memory"
+            style=filled;
+            color="#eebbbb";
+        "shared" [ label = "Shared buffer", shape=rectangle ]
         "channel" [ label = "Channel", shape=rectangle  ]
         shared -> channel [style="invis"]
     }

@@ -1,25 +1,37 @@
 # Operations supported by the abstract machine
 
-## Call to builtin functions
+This file lists the operations on the abstract machine.
 
-Calls to builtin functions are performed by the foreign function interface call operation, `fficall`
-For the purposes of this sematics, builtin functions can take only a fixed number of positional arguments.
-More complex interfaces are possible by wrapping the builtin functions in a Python function.
+## Calls and helpers
 
-### fficall
 
-The `fficall` operation has one integer operand, `argcount`.
-It pops argcount values off the stack, pops the callable, and passes the arguments to the builtin function.
+### FFI_CALL
+
+This opcode makes calls to builtin functions. The operand is the number of arguments
+
+```
+builtin_func *args -> result
+```
+
+Pops the arguments and builtin-function and makes the call using the foreign function interface.
 If the call is successful, the result is pushed to the stack.
 If the call fails, then unwinding occurs.
 
-## Calls to Python functions.
+For the purposes of this sematics, builtin functions can take only a fixed number of positional arguments.
+More complex interfaces are possible by wrapping the builtin function in a Python function.
+
+### Calls to Python functions.
 
 Calls to Python functions are performed in a two step process. Frame creation and pushing the frame.
 
-### make_frame
+### MAKE_FRAME
 
-This operation has no operands.
+This operation has no operand.
+
+```
+func args_tuple keyword_dict -> frame
+```
+
 The function, a tuple of positional arguments, and a dictionary of keyword arguments are popped from the stack.
 The dictionary is top of the stack, next the positional arguments, then the function.
 The frame is initialized as follows:
@@ -40,132 +52,201 @@ The frame is initialized as follows:
 
 If frame creation fails, then perform unwinding with a `TypeError`.
 
-## Calls to bound methods
+### ENTER_FRAME
 
-Calls to bound methods are performed by prepending the `self` attribute of the bound method to the tuple,
-replacing the callable with the `function` attribute of the bound method and repeating the call procedure.
-
-## General calls
-
-If the callable is a Python function, a builtin function, or a bound method,
-then procede as above. Otherwise replace the callable with the result of evaluating `load_special("__call__")` on the callable,
-then repeat the call procedure:
-
-```python
-call():
-    kwargs = POP()
-    args = POP()
-    func = POP()
-    while True:
-        if type!(func) is types.FunctionType:
-            frame = make_frame!(args, kwargs)
-            enter_frame!(frame)
-            break
-        if type!(func) is types.BuiltinFunctionType:
-            if kwargs:
-                unwind!(error!(TypeError, ...))
-            success, value = fficall!(func, args)
-            if success:
-                PUSH(value)
-            else:
-                unwind!(value)
-            break
-        if type!(func) is types.MethodType:
-            args = (func.self,) + args
-            func = func.function
-            continue
-        func = load_special!(func, "__call__")
+```
+frame -> 
 ```
 
-
-### enter_frame 
-
 This operation has no operands.
-Sets `last` to the index of the instruction pointed to by the thread's instruction pointer.
+Sets `last` attribute of the frame currently on top of the stack to the thread's `next` attribute.
 Pushes the frame to the top of the current thread's frame stack.
-Sets the thread's instruction pointer to point to the frame's `last` instruction plus one.
+Sets the thread's `next` attribute to the frame's `last` attribute, plus one.
 
-### return
+### RETURN
 
 This operation has no operands.
-Pops the value from the stack. Note: this should be the only value on the stack.
+
+Callee:
+```
+    value ->
+```
+
+then caller:
+```
+    -> value
+```
+
+Pops the value from the data stack. Note: this should be the only value on the stack.
 Pops the frame from the thread's frame stack.
-Pushes the value to the stack.
+Pushes the value to the data stack.
 
-## Load_special
+### Call Helpers
 
-Loading a special attribute from an object's class is a common operation.
+To implement calls, we need a few helper operations to build up the arguments.
 
-```python
-load_special(name):
-    obj = POP()
-    cls = type!(obj)
-    if has_class_attr!(cls, name): # Has class attr
-        descriptor = get_class_attr!(cls, name) # Get class attr
-        desc_type = type!(descriptor)
-        if has_class_attr!(desc_type, '__get__'):
-            getter = get_class_attr!(desc_type, '__get__')
-            PUSH(descriptor)
-            PUSH((obj, cls))
-            PUSH({})
-            call!()
-        else:
-            PUSH(descriptor)
-    else:
-        msg = ... # "'{cls.__name__}' object has no attribute '{name}'"
-        unwind!(AttributeError(msg))
+### LIST_APPEND
+
+```
+list item -> list
 ```
 
-## Binary operations
+Append `item` to `list`.
 
-```python
-binary_op(lname, rname):
-    right = POP()
-    left = POP()
-    if subtype!(type!(right), type!(left)):
-        PUSH(right)
-        func = load_special!(rname)
-        PUSH(left)
-        PUSH(right)
-        call!()
-    else:
-        PUSH(left)
-        func = load_special!(lname)
-        PUSH(left)
-        PUSH(right)
-        call!()
-        result = POP()
-        if result is NotImplemented:
-            PUSH(right)
-            func = load_special!(rname)
-            PUSH(left)
-            PUSH(right)
-            call!()
-    result = POP()
-    if result is NotImplemented:
-        unwind!(TypeError("operator not implemented"))
-    PUSH(result)
+### DICT_INSERT_NO_DUPLICATE
+
+```
+dict key value -> dict
 ```
 
-`a + b` is implemented as:
+Insert `key, value` pair into `dict`, raising an Exception if `key` is already present in `dict`.
+
+### LIST_TO_TUPLE
+
 ```
-    #compile a
-    #compile b
-    binary_op("__add__", "__radd__")
+list -> tuple
 ```
 
-The other operators follow the same pattern.
+Convert `list` to `tuple`.
 
-## Halt
+### MAPPING_TO_DICT
 
-A special operation, `halt`, exists for terminating execution of a thread.
-All other operations implicitly procede to executing the next operation.
-`halt` does not; execution of the thread halts.
+```
+obj -> dict
+```
+
+Convert `obj` to a mapping. Fail if `obj` is not a mapping.
+
+## Type checking operations
+
+### TYPE
+
+Takes no operand.
+
+```
+obj -> cls
+```
+
+Pops the object on top of the stack and pushes its class.
+
+### SUBTYPE
+
+Takes no operand.
+
+```
+cls1 cls2 -> res
+```
+
+Pushes `True` if `cls1` is a direct subtype of `cls2`,
+ignoring anything but the class's MRO.
+```
+res = cls1 in cls2.__mro__
+```
 
 ## Control Flow
 
-Three are three control flow operations:
+Three are three local control flow operations:
 
-* ``jump`` -- Jumps uncondtionally to the target label.
-* ``branch_on_true`` -- Pops the top value on the stack and jumps to the target label, if true.
-* ``branch_on_false`` -- Pops the top value on the stack and jumps to the target label, if false.
+* ``JUMP`` -- Jumps uncondtionally to the target label.
+* ``BRANCH`` -- Pops the top value on the stack and jumps to the target label, if value matches condition.
+
+And non-local control flow operations
+* ``RETURN`` -- Returns from a call, see section on calls.
+* ``RAISE`` -- Starts unwinding, see section on exceptions.
+* ``HALT`` -- Stops the current thread.
+
+In addition there is a `TO_BOOL` operation to convert any value to a boolean.
+This is provided to avoid have to mix the conversion to boolean and the jump into a single operation.
+
+### JUMP
+
+```
+->
+```
+
+This operation has one operand, the `offset`, as a signed integer, of the target instruction from the following instruction.
+
+The `jump` instruction simply adds the `offset` to the `next` attribute of the current thread.
+
+### BRANCH
+
+```
+cond ->
+```
+
+This operation has two operands, the `way` (a boolean), and the `offset`, as a signed integer, of the target instruction from the following instruction.
+
+The `BRANCH` operation pops the the value from the top of the stack and, if the value is the same as `way`, add the `offset` to the `next` attribute of the current thread.
+
+```python
+def BRANCH(cond, way, target):
+    if cond is way:
+        JUMP(target)
+```
+
+### TO_BOOL
+
+```
+obj -> bool
+```
+
+This operation has no operands.
+Converts the obj on top of the stack to a bool. 
+This operation is not strictly necessary as it is defined as:
+
+```python
+def TO_BOOL(obj):
+    has_bool, to_bool = load_special!(obj, "__bool__")
+    if has_bool:
+        res = to_bool()
+        if res is True or res is False:
+            return res
+        raise TypeError(...)
+    return True
+```
+
+### HALT
+
+Halt has no operands.
+
+A special operation, `HALT`, exists for terminating execution of a thread.
+All other operations implicitly procede to executing the next operation.
+`HALT` does not; execution of the thread halts.
+
+`HALT` removes the current thread from the interpreter's `threads` and `runnable-threads` sets.
+
+
+## Exception Handling
+
+The are three exception handling control operations:
+
+### PUSH_HANDLER
+
+```
+->
+```
+
+Pushes an exception handler to the handler stack.
+Takes one operand, the offset, as a signed integer, of the target instruction from the following instruction.
+
+This instruction pushes the pair `(stackdepth, target)` to the handler stack,
+where `stackdepth` is the current depth of the data stack.
+
+#### POP_HANDLER
+
+Has no operand.
+
+```
+->
+```
+
+Pops the top pair from the handler stack.
+
+#### SWAP_EXCEPTION
+
+Swaps the exception on top of the data stack with the current exception
+
+```
+exc -> current_exc
+```
+Sets `current_exc = exc`.
