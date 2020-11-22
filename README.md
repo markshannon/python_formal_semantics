@@ -6,8 +6,8 @@ Partial specification and examples for formal specification of Python's semantic
 
 We aim to define the semantics of Python using [small step operational semantics](https://en.wikipedia.org/wiki/Operational_semantics#Small-step_semantics).
 
-Conventionally, small step semantics are using defined directly in terms of syntax.
-However, given the complex semantics of some statements, such as the `try`-`finally`, and `with` statements, we start by defining the operational semantics of an abstract machine using a set of operations. The semantics of each statement can then be defined by defining a translation from syntactice element to a list of operations.
+Conventionally, small step semantics are defined directly in terms of syntax.
+However, given the complex semantics of some statements, such as the `try`-`finally`, and `with` statements, we start by defining the operational semantics of an abstract machine using a set of operations. The semantics of each statement can then be defined by defining a translation from syntactic element to a list of operations.
 
 ## The semantics
 
@@ -22,9 +22,9 @@ Execution of a program consists of the sequence of transitions that begins at th
 
 ### Semantics components
 
-* [Top level](.overview.md)
+* [Top level](./overview.md)
 * [Abstract machine](./machine.md)
-* [Transition functions](.operations.md)
+* [Transition functions](./operations.md)
 
 
 ## Python implementation

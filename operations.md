@@ -17,7 +17,7 @@ Pops the arguments and builtin-function and makes the call using the foreign fun
 If the call is successful, the result is pushed to the stack.
 If the call fails, then unwinding occurs.
 
-For the purposes of this sematics, builtin functions can take only a fixed number of positional arguments.
+For the purposes of this semantics, builtin functions can take only a fixed number of positional arguments.
 More complex interfaces are possible by wrapping the builtin function in a Python function.
 
 ### Calls to Python functions.
@@ -147,7 +147,7 @@ res = cls1 in cls2.__mro__
 
 Three are three local control flow operations:
 
-* ``JUMP`` -- Jumps uncondtionally to the target label.
+* ``JUMP`` -- Jumps unconditionally to the target label.
 * ``BRANCH`` -- Pops the top value on the stack and jumps to the target label, if value matches condition.
 
 And non-local control flow operations
@@ -176,7 +176,7 @@ cond ->
 
 This operation has two operands, the `way` (a boolean), and the `offset`, as a signed integer, of the target instruction from the following instruction.
 
-The `BRANCH` operation pops the the value from the top of the stack and, if the value is the same as `way`, add the `offset` to the `next` attribute of the current thread.
+The `BRANCH` operation pops the value from the top of the stack and, if the value is the same as `way`, adds the `offset` to the `next` attribute of the current thread.
 
 ```python
 def BRANCH(cond, way, target):
@@ -210,7 +210,7 @@ def TO_BOOL(obj):
 Halt has no operands.
 
 A special operation, `HALT`, exists for terminating execution of a thread.
-All other operations implicitly procede to executing the next operation.
+All other operations implicitly proceed to executing the next operation.
 `HALT` does not; execution of the thread halts.
 
 `HALT` removes the current thread from the interpreter's `threads` and `runnable-threads` sets.
