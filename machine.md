@@ -60,7 +60,7 @@ Each code object has the following attributes:
 
 ## Execution
 
-Each thread in the machine repeated executes the current operation, until it halts.
+Each thread in the machine repeatedly executes the current operation, until it halts.
 In Python pseudo-code, this would be something like:
 ```python
 while True:

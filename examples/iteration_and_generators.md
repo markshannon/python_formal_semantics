@@ -103,11 +103,11 @@ exhausted:
 
 #### MAKE_GEN
 
-The `MAKE_GEN` creates a generator from the current frame add pushes it to the stack.
+The `MAKE_GEN` instruction creates a generator from the current frame and pushes it to the stack.
 
 It performs the following steps:
 
-1. Create a generator object who's frame is the current frame.
+1. Create a generator object whose frame is the current frame.
 2. Push that generator to the stack.
 3. Increment the `instruction pointer`
 4. Continue
@@ -143,7 +143,7 @@ The `EXHAUSTED` instruction is equivalent to
     LOAD_CONSTANT None
     GEN_RETURN
 ```
-but does not use the stack, to allow implementations to free the memory for the stack as soon as the generate is exhausted.
+but does not use the stack, to allow implementations to free the memory for the stack as soon as the generator is exhausted.
 
 
 

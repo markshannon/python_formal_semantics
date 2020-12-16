@@ -6,7 +6,7 @@ Correct parsing of the source code is complex, and out of scope for this documen
 
 For this document we assume that source has been parsed to form a tree and that each syntactic part of the original source is represented by a subtree of the tree for the whole source.
 
-We express the tranlsation from source to sequence of operations as a function on part of the AST than produces a sequence of operations. Translation is a recursive process, translation of the AST for `a + b` requires the result of translating `a` and of translating `b`. 
+We express the translation from source to sequence of operations as a function on part of the AST that produces a sequence of operations. Translation is a recursive process, translation of the AST for `a + b` requires the result of translating `a` and of translating `b`. 
 
 For convenience, the expression `translate(x)` means translate the AST for `x`.
 
@@ -16,10 +16,10 @@ For convenience, the expression `translate(x)` means translate the AST for `x`.
 
 In the following we will often describe the way one syntactic construct is translated by converting it to another one.
 However, it is not always possible to do directly in Python source and we need to include a pseudo-operation.
-We use a `!` to signify that a name is an pseudo-operation, not a Python variable.
+We use a `!` to signify that a name is a pseudo-operation, not a Python variable.
 For example, `load_attr` is just the Python variable "load_attr", but `load_attr!` means the "load_attr" pseudo-operation.
 
-When describing translations and pseudo-operations, the pseudo-operations may used in what looks a normal Python call.
+When describing translations and pseudo-operations, the pseudo-operations may be used in what looks a normal Python call.
 These should not be considered calls in Python, but rather like calls in a language like C, where there is no lookup and
 the execution enters the pseudo-operation directly.
 
@@ -34,7 +34,7 @@ def emit(opcode, operand=None):
 
 ## Expressions
 
-### Attibutes
+### Attributes
 
 #### Load
 
@@ -89,7 +89,7 @@ def lookup_class_attr!(cls, name):
 
 ### Calls
 
-The call `f(*args, **kwrgs)` is translated using the `call!` pseudo-operation:
+The call `f(*args, **kwargs)` is translated using the `call!` pseudo-operation:
 
 ```python
     translate(f)
@@ -98,15 +98,15 @@ The call `f(*args, **kwrgs)` is translated using the `call!` pseudo-operation:
     emit(call!)
 ```
 
-Most calls are not of the form, `f(*args, **kwrgs)`. To translate those calls,
+Most calls are not of the form, `f(*args, **kwargs)`. To translate those calls,
 all positional arguments must be merged to form a tuple, and all named arguments must be
 merged to form a dictionary.
 
-Translation then procedes as follows:
+Translation then proceeds as follows:
 
 1. Create an empty list
 2. For each positional or star argument:
-    * Tranlsate the argument
+    * Translate the argument
     * If star argument:
         * Extend the list
     * Else:
@@ -117,8 +117,8 @@ Translation then procedes as follows:
     * If double-star argument:
         * Merge into the dict, with `MERGE_DICT_NO_DUPLICATES`.
     * Else:
-        * Tranlsate the key
-        * Tranlsate the value
+        * Translate the key
+        * Translate the value
         * Emit `DICT_INSERT_NO_DUPLICATES` operation
 6. Emit the `CALL` operation.
 
@@ -186,7 +186,7 @@ Binary operations of the form `l op r` are all translated the same way, using th
 
 ```python
     translate(l)
-    tranlsate(r)
+    translate(r)
     opname, oprname = binary_op_names[op]
     emit(binary_op!, (opname, oprname))
 ```
@@ -224,7 +224,7 @@ def binary_op!(l, r, name, rname):
 #### Simple assignment
 
 The translation of the simple assignment `a = b` depends on the scope in which `a` resides.
-In all case the value `b` is translated first.
+In all cases, the value `b` is translated first.
 
 * If `a` is a function local variable then emit `store_local("a")`
 * If `a` is a class local variable, then emit `store_name("a")`
@@ -280,7 +280,7 @@ def store_subscr!(value, obj, key):
 
 ### Augmented assignments
 
-Augmented assignments, such as `a += b` are implemented as if the operator and assignment were seperated, like `a = a + b`, but the any subexpression in `a` are only evaluated once and the inplace form of the operator is used.
+Augmented assignments, such as `a += b` are implemented as if the operator and assignment were separated, like `a = a + b`, but any subexpressions in `a` are only evaluated once and the inplace form of the operator is used.
 
 `a += b` is translated by:
 
@@ -292,6 +292,7 @@ Augmented assignments, such as `a += b` are implemented as if the operator and a
 ```
 
 but `a.x += b` would be translated as:
+
 ```python
     translate(a)
     emit(STORE_TEMP, 'obj')
@@ -324,7 +325,6 @@ where `inplace_op!` is defined as:
 
 ```python
 def inplace_op!(l, r, iname, lname, rname):
-
     succ, op = load_special!(l, iname)
     if succ:
         res = op(r)
@@ -375,8 +375,8 @@ end:
 #### Control flow stack
 
 In order to correctly translate loops, `try` statements, `with` statements and anything else with complex control flow, we need to maintain a control flow stack. This is a stack of control flow structures that we are translating. It has no operational equivalent.
-We define an anciliary function : `push_control(kind, loop_label, exit_label, ast)`.
-This function is used in a with statement to temporarily push a control to the control stack.
+We define an ancillary function: `push_control(kind, loop_label, exit_label, ast)`.
+This function is used in a `with` statement to temporarily push a control to the control stack.
 
 #### The `while` statement
 
@@ -388,7 +388,7 @@ while test:
 Is translated by:
 
 ```
-    tranlsate(test)
+    translate(test)
     emit(BRANCH, (False, end))
 loop:
     with push_control("loop", (loop, end)):
@@ -432,7 +432,7 @@ except:
 Is translated as:
 
 ```
-    emit(PUSH_HANDLER(label)
+    emit(PUSH_HANDLER, label)
     with push_control("try", None):
         translate(body)
     emit(POP_HANDLER)
@@ -638,8 +638,14 @@ else:
 
 ### The `return` statement
 
+```python
+return a
+```
+
+Is translated as:
 
 ```python
+translate(a)
 # Save return value before unwinding
 emit(STORE_TEMP, "return_value")
 for name, data in control_stack:
